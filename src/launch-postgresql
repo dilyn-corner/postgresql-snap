@@ -1,0 +1,42 @@
+#!/bin/sh -eux
+
+log() {
+    printf '%s: %s\n' "$1" "$2"
+}
+
+# A sanity checking function. The database should always exist on install
+check_for_database() {
+    [ -e "${SNAP_COMMON}/database/postgresql.conf" ] || {
+        log "INFO" "Creating postgresql database"
+        initdb \
+            --pgdata="${SNAP_COMMON}/database" \
+            --username=admin                   \
+            --no-instructions
+
+    # Rerun the configure hook, as we skip running it on first install to appease
+    # postgres but still want those initially seeded configuration values to appear
+    # "${SNAP}/meta/hooks/configure"
+    }
+}
+
+start() {
+    log "INFO" "Starting postgresql database"
+    postgres -h 127.0.0.1 \
+        -D "${SNAP_COMMON}/database" \
+        -k "${SNAP_COMMON}/postgresql"
+}
+
+stop() {
+    log "WARN" "Stopping postgresql database"
+    pg_pid="$(head -1 "${SNAP_COMMON}/database/postmaster.pid")"
+    kill -INT "$pg_pid"
+}
+
+reload() {
+    log "INFO" "Restarting postgresql database"
+    stop && start
+}
+
+check_for_database
+
+"$@"

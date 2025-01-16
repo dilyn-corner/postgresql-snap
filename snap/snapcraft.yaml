@@ -1,0 +1,93 @@
+name: postgresql
+adopt-info: postgresql
+base: core24
+summary: PostgreSQL is a powerful, open source object-relational database system.
+description: |
+  PostgreSQL is a powerful, open source object-relational database system.
+  It has more than 15 years of active development and a proven architecture
+  that has earned it a strong reputation for reliability, data integrity,
+  and correctness.
+
+grade: stable
+confinement: strict
+
+license: "BSD-3-Clause AND CC-BY-SA-4.0 AND GPL-3.0-or-later"
+
+platforms:
+  amd64:
+  arm64:
+  armhf:
+  s390x:
+  ppc64el:
+  # riscv64:
+
+# postgres will not run with root permissions and this is a workaround to allow
+# a snap to drop privileges to some non-root user.
+# Requires setpriv and some sort of command chain script to handle permission
+# dropping. See: https://snapcraft.io/docs/system-usernames
+system-usernames:
+  snap_daemon: shared
+
+apps:
+  # This service manages postgres operations. If this snap exposed postgres
+  # binaries as apps, this service should be uncommented (this would allow CLI
+  # access to postgresql commands; this daemon is not suitable for things like
+  # automated deployments of postgresql clusters)
+  # postgresql:
+  #   daemon: simple
+  #   command-chain: [setpriv-wrapper]
+  #   command: launch-postgresql start
+  #   stop-command: launch-postgresql stop
+  #   reload-command: launch-postgresql reload
+  #   start-timeout: 10m
+  #   plugs: [network, network-bind]
+  #   environment:
+  #     PATH:     $SNAP/usr/lib/postgresql/16/bin:$PATH
+  #     PERL5LIB: $PERL5LIB:$SNAP/usr/share/perl5:$SNAP/usr/share/perl
+
+  # This app is meant for debugging
+  pgctl:
+    command-chain: [setpriv-wrapper]
+    command: pgctl-wrapper
+    plugs: [network, network-bind]
+    environment:
+      PATH:     $SNAP/usr/lib/postgresql/16/bin:$PATH
+      PERL5LIB: $PERL5LIB:$SNAP/usr/share/perl5:$SNAP/usr/share/perl
+
+  # This app is meant for debugging
+  psql:
+    command-chain: [setpriv-wrapper]
+    command: psql-wrapper
+    plugs: [network, network-bind]
+    environment:
+      PATH:     $SNAP/usr/lib/postgresql/16/bin:$PATH
+      PERL5LIB: $PERL5LIB:$SNAP/usr/share/perl5:$SNAP/usr/share/perl
+
+# This slot exposes all of this snap to any other snap to use postgresql without
+# bundling any of postgresql. This allows # multiple snaps to use the postgresql
+# snap however they see fit, without duplicating postgresql files on the device
+# (by bundling postgresql with every snap)
+slots:
+  postgresql:
+    interface: content
+    content: bins
+    read:
+      - .
+
+parts:
+  postgresql:
+    plugin: dump
+    source: src/
+    stage-packages:
+      - perl
+      - postgresql
+      - postgresql-16-debversion
+      - postgresql-plpython3-16
+      # Note that util-linux is not required on sufficiently up-to-date devices
+      # as the setpriv binary in the core snap was recently made available in
+      # the default confinement profile.
+      - util-linux
+    override-build: |
+      craftctl default
+
+      craftctl set version=$(dpkg-deb -f "${CRAFT_PART_BUILD}/../stage_packages/postgresql_"*_all.deb Version)

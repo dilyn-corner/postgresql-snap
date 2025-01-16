@@ -1,0 +1,5 @@
+#!/bin/sh -eux
+
+export PSQLRC="$SNAP_COMMON/.psqlrc"
+
+"$SNAP/usr/bin/psql" "$@"
