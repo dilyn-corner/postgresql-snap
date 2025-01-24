@@ -12,10 +12,6 @@ check_for_database() {
             --pgdata="${SNAP_COMMON}/database" \
             --username=admin                   \
             --no-instructions
-
-    # Rerun the configure hook, as we skip running it on first install to appease
-    # postgres but still want those initially seeded configuration values to appear
-    # "${SNAP}/meta/hooks/configure"
     }
 }
 
