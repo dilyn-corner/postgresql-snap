@@ -1,8 +1,5 @@
 #!/bin/sh -eux
 
-# The postgresql server could take a while to startup. Give it a second.
-sleep 10
-
 ## Fine-tuning is desirable to improve performance.
 ## Primarily, this would be accomplished by editing postgresql.conf
 ## Instead of exposing that configuration file to a variety of snaps,

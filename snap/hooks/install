@@ -14,3 +14,14 @@ chown -Rf snap_daemon:snap_daemon "${SNAP_COMMON}/logs"
 chown -Rf snap_daemon:snap_daemon "${SNAP_COMMON}/history"
 chown -Rf snap_daemon:snap_daemon "${SNAP_COMMON}/database"
 chown -Rf snap_daemon:snap_daemon "${SNAP_COMMON}/postgresql"
+
+daemon="$(snapct get daemon)"
+if [ "$daemon" = "true" ]; then
+  snapctl start --enable "${SNAP_INSTANCE_NAME}.postgresql"
+  # TODO: make database initialization configurable.
+  # Create a cluster so that postgres is available immediately.
+  initdb \
+      --pgdata="${SNAP_COMMON}/database" \
+      --username=admin                   \
+      --no-instructions
+fi
