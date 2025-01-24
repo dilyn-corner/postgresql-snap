@@ -29,21 +29,19 @@ system-usernames:
   snap_daemon: shared
 
 apps:
-  # This service manages postgres operations. If this snap exposed postgres
-  # binaries as apps, this service should be uncommented (this would allow CLI
-  # access to postgresql commands; this daemon is not suitable for things like
-  # automated deployments of postgresql clusters)
-  # postgresql:
-  #   daemon: simple
-  #   command-chain: [setpriv-wrapper]
-  #   command: launch-postgresql start
-  #   stop-command: launch-postgresql stop
-  #   reload-command: launch-postgresql reload
-  #   start-timeout: 10m
-  #   plugs: [network, network-bind]
-  #   environment:
-  #     PATH:     $SNAP/usr/lib/postgresql/16/bin:$PATH
-  #     PERL5LIB: $PERL5LIB:$SNAP/usr/share/perl5:$SNAP/usr/share/perl
+  # This service manages postgres operations.
+  postgresql:
+    daemon: simple
+    command-chain: [setpriv-wrapper]
+    command: launch-postgresql start
+    stop-command: launch-postgresql stop
+    reload-command: launch-postgresql reload
+    start-timeout: 10m
+    install-mode: disable
+    plugs: [network, network-bind]
+    environment:
+      PATH:     $SNAP/usr/lib/postgresql/16/bin:$PATH
+      PERL5LIB: $PERL5LIB:$SNAP/usr/share/perl5:$SNAP/usr/share/perl
 
   # This app is meant for debugging
   pgctl:
