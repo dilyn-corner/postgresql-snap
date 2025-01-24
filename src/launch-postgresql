@@ -4,6 +4,7 @@ log() {
     printf '%s: %s\n' "$1" "$2"
 }
 
+# TODO: make database initialization configurable.
 # A sanity checking function. The database should always exist on install
 check_for_database() {
     [ -e "${SNAP_COMMON}/database/postgresql.conf" ] || {
