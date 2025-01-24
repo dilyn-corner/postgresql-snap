@@ -60,6 +60,7 @@ apps:
     command: psql-wrapper
     plugs: [network, network-bind]
     environment:
+      PSQLRC:   $SNAP_COMMON/.psqlrc
       PATH:     $SNAP/usr/lib/postgresql/16/bin:$PATH
       PERL5LIB: $PERL5LIB:$SNAP/usr/share/perl5:$SNAP/usr/share/perl
 
