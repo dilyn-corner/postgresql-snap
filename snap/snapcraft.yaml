@@ -80,6 +80,7 @@ parts:
     stage-packages:
       - perl
       - postgresql
+      # TODO: ship debversion as a component
       - postgresql-16-debversion
       - postgresql-plpython3-16
       # Note that util-linux is not required on sufficiently up-to-date devices
