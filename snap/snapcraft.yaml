@@ -92,3 +92,29 @@ parts:
       craftctl default
 
       craftctl set version=$(dpkg-deb -f "${CRAFT_PART_BUILD}/../stage_packages/postgresql_"*_all.deb Version)
+
+  # Required by immich
+  # There's no good reason it should be here and not with immich; something to
+  # experiment with
+  pgvector-rs:
+    plugin: rust
+    source: https://github.com/tensorchord/pgvecto.rs
+    source-depth: 1
+    source-type: git
+    source-tag: v0.2.0
+    build-packages:
+      - clang-16
+      - libssl-dev
+      - pkg-config
+      - postgresql
+      - postgresql-server-dev-16
+    override-build: |
+      cargo install \
+        cargo-pgrx  \
+        --locked    \
+        --version $(grep 'pgrx = { version =' Cargo.toml | cut -d\" -f2)
+
+      sed -i 's/version = "0.0.0"/version = "0.2.0"/' Cargo.toml
+
+      cargo pgrx init    --pg16    pg_config
+      cargo pgrx package --out-dir "${CRAFT_PART_INSTALL}/"
