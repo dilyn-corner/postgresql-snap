@@ -1,6 +1,6 @@
 name: postgresql
 adopt-info: postgresql
-base: core24
+base: core22
 summary: PostgreSQL is a powerful, open source object-relational database system.
 description: |
   PostgreSQL is a powerful, open source object-relational database system.
@@ -18,12 +18,12 @@ license: "BSD-3-Clause AND CC-BY-SA-4.0 AND GPL-3.0-or-later"
 assumes:
   - snapd2.68
 
-platforms:
-  amd64:
-  arm64:
-  ppc64el:
-  riscv64:
-  s390x:
+architectures:
+  - amd64
+  - arm64
+  - ppc64el
+  - riscv64
+  - s390x
 
 # postgres hates to run with root permissions and this is a workaround to allow
 # a snap to drop privileges to some non-root user.
@@ -47,7 +47,7 @@ hooks:
   install:
     plugs: &_plugs [network, network-bind]
     environment: &_env
-      PATH:            "${SNAP}/usr/lib/postgresql/16/bin:$PATH"
+      PATH:            "${SNAP}/usr/lib/postgresql/14/bin:$PATH"
       LD_LIBRARY_PATH: "${SNAP}/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:$LD_LIBRARY_PATH"
       PERL5LIB:        "$PERL5LIB:$SNAP/usr/share/perl5:$SNAP/usr/share/perl"
 
@@ -86,8 +86,8 @@ parts:
       # Required for landscape
       # There's no good reason it should be here and not with landscape;
       # something to experiment with
-      - postgresql-16-debversion
-      - postgresql-plpython3-16
+      - postgresql-14-debversion
+      - postgresql-plpython3-14
     override-build: |
       craftctl default
 
@@ -97,24 +97,13 @@ parts:
   # There's no good reason it should be here and not with immich; something to
   # experiment with
   pgvector-rs:
-    plugin: rust
-    source: https://github.com/tensorchord/pgvecto.rs
-    source-depth: 1
-    source-type: git
-    source-tag: v0.2.0
-    build-packages:
-      - clang-16
-      - libssl-dev
-      - pkg-config
-      - postgresql
-      - postgresql-server-dev-16
+    plugin: nil
+    # Within clang-16 this is a bit hairy
     override-build: |
-      cargo install \
-        cargo-pgrx  \
-        --locked    \
-        --version $(grep 'pgrx = { version =' Cargo.toml | cut -d\" -f2)
-
-      sed -i 's/version = "0.0.0"/version = "0.2.0"/' Cargo.toml
-
-      cargo pgrx init    --pg16    pg_config
-      cargo pgrx package --out-dir "${CRAFT_PART_INSTALL}/"
+      if [ "${CRAFT_ARCH_BUILD_FOR}" = "amd64" ] || [ "${CRAFT_ARCH_BUILD_FOR}" = arm64 ]; then
+        curl -o "vectors-pg14_0.2.1_${CRAFT_ARCH_BUILD_FOR}.deb" \
+          "https://github.com/tensorchord/pgvecto.rs/releases/download/v0.2.1/vectors-pg14_0.2.1_${CRAFT_ARCH_BUILD_FOR}.deb"
+        dpkg -x "${CRAFT_PART_INSTALL}/" vectors-pg14_0.2.1_${CRAFT_ARCH_BUILD_FOR}.deb"
+      fi
+    stage:
+      - -usr/share/doc
