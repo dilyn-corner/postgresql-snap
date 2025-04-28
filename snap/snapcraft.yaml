@@ -21,10 +21,9 @@ assumes:
 platforms:
   amd64:
   arm64:
-  armhf:
-  s390x:
   ppc64el:
-  # riscv64:
+  riscv64:
+  s390x:
 
 # postgres hates to run with root permissions and this is a workaround to allow
 # a snap to drop privileges to some non-root user.
@@ -32,6 +31,25 @@ platforms:
 # dropping. See: https://snapcraft.io/docs/system-usernames
 system-usernames:
   snap_daemon: shared
+
+# This slot exposes all of this snap to any other snap to use postgresql without
+# bundling any of postgresql. This allows multiple snaps to use the postgresql
+# snap however they see fit, without duplicating postgresql files on the device
+# (by bundling postgresql with every snap)
+slots:
+  postgresql:
+    interface: content
+    content: bins
+    read:
+      - $SNAP
+
+hooks:
+  install:
+    plugs: &_plugs [network, network-bind]
+    environment: &_env
+      PATH:            "${SNAP}/usr/lib/postgresql/16/bin:$PATH"
+      LD_LIBRARY_PATH: "${SNAP}/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:$LD_LIBRARY_PATH"
+      PERL5LIB:        "$PERL5LIB:$SNAP/usr/share/perl5:$SNAP/usr/share/perl"
 
 apps:
   # This service manages postgres operations.
@@ -41,39 +59,22 @@ apps:
     stop-command: launch-postgresql stop
     reload-command: launch-postgresql reload
     start-timeout: 10m
-    install-mode: disable
-    plugs: [network, network-bind]
-    environment:
-      PATH:     $SNAP/usr/lib/postgresql/16/bin:$PATH
-      PERL5LIB: $PERL5LIB:$SNAP/usr/share/perl5:$SNAP/usr/share/perl
+    plugs: *_plugs
+    environment: *_env
 
   # This app is meant for debugging
   pgctl:
     command: pgctl-wrapper
-    plugs: [network, network-bind]
-    environment:
-      PATH:     $SNAP/usr/lib/postgresql/16/bin:$PATH
-      PERL5LIB: $PERL5LIB:$SNAP/usr/share/perl5:$SNAP/usr/share/perl
+    plugs: *_plugs
+    environment: *_env
 
   # This app is meant for debugging
   psql:
     command: psql-wrapper
-    plugs: [network, network-bind]
+    plugs: *_plugs
     environment:
-      PSQLRC:   $SNAP_COMMON/.psqlrc
-      PATH:     $SNAP/usr/lib/postgresql/16/bin:$PATH
-      PERL5LIB: $PERL5LIB:$SNAP/usr/share/perl5:$SNAP/usr/share/perl
-
-# This slot exposes all of this snap to any other snap to use postgresql without
-# bundling any of postgresql. This allows # multiple snaps to use the postgresql
-# snap however they see fit, without duplicating postgresql files on the device
-# (by bundling postgresql with every snap)
-slots:
-  postgresql:
-    interface: content
-    content: bins
-    read:
-      - .
+      <<: *_env
+      PSQLRC: $SNAP_COMMON/.psqlrc
 
 parts:
   postgresql:
@@ -82,7 +83,9 @@ parts:
     stage-packages:
       - perl
       - postgresql
-      # TODO: ship debversion as a component
+      # Required for landscape
+      # There's no good reason it should be here and not with landscape;
+      # something to experiment with
       - postgresql-16-debversion
       - postgresql-plpython3-16
     override-build: |
