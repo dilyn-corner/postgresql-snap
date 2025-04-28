@@ -13,6 +13,11 @@ confinement: strict
 
 license: "BSD-3-Clause AND CC-BY-SA-4.0 AND GPL-3.0-or-later"
 
+# Minimum snapd version to support using setpriv from base snap
+# https://github.com/canonical/snapd/commit/1792fa040db787d766098ba4238dbcfaddfe0f7e
+assumes:
+  - snapd2.68
+
 platforms:
   amd64:
   arm64:
@@ -21,7 +26,7 @@ platforms:
   ppc64el:
   # riscv64:
 
-# postgres will not run with root permissions and this is a workaround to allow
+# postgres hates to run with root permissions and this is a workaround to allow
 # a snap to drop privileges to some non-root user.
 # Requires setpriv and some sort of command chain script to handle permission
 # dropping. See: https://snapcraft.io/docs/system-usernames
@@ -32,7 +37,6 @@ apps:
   # This service manages postgres operations.
   postgresql:
     daemon: simple
-    command-chain: [setpriv-wrapper]
     command: launch-postgresql start
     stop-command: launch-postgresql stop
     reload-command: launch-postgresql reload
@@ -45,7 +49,6 @@ apps:
 
   # This app is meant for debugging
   pgctl:
-    command-chain: [setpriv-wrapper]
     command: pgctl-wrapper
     plugs: [network, network-bind]
     environment:
@@ -54,7 +57,6 @@ apps:
 
   # This app is meant for debugging
   psql:
-    command-chain: [setpriv-wrapper]
     command: psql-wrapper
     plugs: [network, network-bind]
     environment:
@@ -83,10 +85,6 @@ parts:
       # TODO: ship debversion as a component
       - postgresql-16-debversion
       - postgresql-plpython3-16
-      # Note that util-linux is not required on sufficiently up-to-date devices
-      # as the setpriv binary in the core snap was recently made available in
-      # the default confinement profile.
-      - util-linux
     override-build: |
       craftctl default
 

@@ -1,24 +1,16 @@
 #!/bin/sh -eux
 
+_setpriv() {
+	setpriv --clear-groups --reuid snap_daemon --regid snap_daemon -- "$@"
+}
+
 log() {
     printf '%s: %s\n' "$1" "$2"
 }
 
-# TODO: make database initialization configurable.
-# A sanity checking function. The database should always exist on install
-check_for_database() {
-    [ -e "${SNAP_COMMON}/database/postgresql.conf" ] || {
-        log "INFO" "Creating postgresql database"
-        initdb \
-            --pgdata="${SNAP_COMMON}/database" \
-            --username=admin                   \
-            --no-instructions
-    }
-}
-
 start() {
     log "INFO" "Starting postgresql database"
-    postgres -h 127.0.0.1 \
+    _setpriv postgres -h 127.0.0.1   \
         -D "${SNAP_COMMON}/database" \
         -k "${SNAP_COMMON}/postgresql"
 }
@@ -33,7 +25,5 @@ reload() {
     log "INFO" "Restarting postgresql database"
     stop && start
 }
-
-check_for_database
 
 "$@"

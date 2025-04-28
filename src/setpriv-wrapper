@@ -1,6 +1,0 @@
-#!/bin/sh -eux
-
-# postgres does not allow you to run most commands as root, so we have to drop
-# permissions for our various postgres commands
-"$SNAP/usr/bin/setpriv" --clear-groups --reuid snap_daemon \
-    --regid snap_daemon -- "$@"
