@@ -98,12 +98,13 @@ parts:
   # experiment with
   pgvector-rs:
     plugin: nil
+    build-packages: [curl]
     # Within clang-16 this is a bit hairy
     override-build: |
-      if [ "${CRAFT_ARCH_BUILD_FOR}" = "amd64" ] || [ "${CRAFT_ARCH_BUILD_FOR}" = arm64 ]; then
-        curl -o "vectors-pg14_0.2.1_${CRAFT_ARCH_BUILD_FOR}.deb" \
+      if [ "${CRAFT_ARCH_BUILD_FOR}" = "amd64" ] || [ "${CRAFT_ARCH_BUILD_FOR}" = "arm64" ]; then
+        curl -fLo "vectors-pg14_0.2.1_${CRAFT_ARCH_BUILD_FOR}.deb" \
           "https://github.com/tensorchord/pgvecto.rs/releases/download/v0.2.1/vectors-pg14_0.2.1_${CRAFT_ARCH_BUILD_FOR}.deb"
-        dpkg -x "${CRAFT_PART_INSTALL}/" vectors-pg14_0.2.1_${CRAFT_ARCH_BUILD_FOR}.deb"
+        dpkg -x "vectors-pg14_0.2.1_${CRAFT_ARCH_BUILD_FOR}.deb" "${CRAFT_PART_INSTALL}/"
       fi
     stage:
       - -usr/share/doc
